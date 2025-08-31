@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Product Order Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      padding: 20px;
+      color: #222;
+    }
+    .container {
+      max-width: 800px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin: auto;
+    }
+    input {
+      padding: 8px;
+      margin: 4px 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 6px 4px 12px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-primary { background: #007bff; color: #fff; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-green { background: #28a745; color: #fff; }
+    .btn-green:hover { background: #1e7e34; }
+    .btn-red { background: #dc3545; color: #fff; }
+    .btn-red:hover { background: #b52a37; }
+    .product-row {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f1f3f5;
+      border-radius: 10px;
+      white-space: pre-line;
+      font-size: 15px;
+    }
+    .copy-btn {
+      display: none;
+      margin-top: 10px;
+    }
+    .bold { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display:flex; justify-content:center; align-items:center;">
+      <img src="93.png" style="height:150px; width:150px;" alt="logo">
+    </div>
+
+    <h2 style="text-align:center">
+      AL-KARIM SHOP Order Calculator
+    </h2>
+
+    <div class="rates-box">
+      💷 <b>UK Order Rates (BDT per £)/PER PRODUCT:</b><br>
+      💰 Up to £50 → 174 tk/£<br>
+      💰 £51–£200 → 173 tk/£<br>
+      💰 £201–£400 → 172 tk/£<br>
+      💰 £401–£700 → 171 tk/£<br>
+      💰 £701–£1000 → 170 tk/£<br>
+      💰 Above £1000 → 169 tk/£<br><br>
+      ⚖ <b>Cargo Charge:</b> 1199 tk/kg OR 120 tk/100 gm
+    </div>
+
+    <label>💱 Exchange Rate (1£ = ? ৳):</label>
+    <input type="number" id="rate" placeholder="Enter rate, e.g. 174" step="0.01">
+
+    <div id="products"></div>
+
+    <button class="btn-primary" onclick="addProduct()">➕ Add Product</button>
+    <button class="btn-green" onclick="calculate()">Calculate</button>
+
+    <div id="output" class="result"></div>
+    <button id="copyBtn" class="btn-green copy-btn" onclick="copyText()">📋 Copy</button>
+  </div>
+
+  <script>
+    let productCount = 0;
+
+    function addProduct() {
+      productCount++;
+      const productsDiv = document.getElementById("products");
+
+      const div = document.createElement("div");
+      div.className = "product-row";
+      div.id = "product-" + productCount;
+      div.innerHTML = `
+        <label>🔗 Product Name:</label>
+        <input type="text" id="name-${productCount}" placeholder="Enter product name">
+
+        <label>💷 Product Price (£):</label>
+        <input type="number" id="price-${productCount}" placeholder="Enter price in GBP" step="0.01">
+
+        <label>⚖️ Weight (grams):</label>
+        <input type="number" id="weight-${productCount}" placeholder="Enter weight in grams">
+
+        <button class="btn-red" onclick="removeProduct(${productCount})">🗑 Remove</button>
+      `;
+      productsDiv.appendChild(div);
+    }
+
+    function removeProduct(id) {
+      document.getElementById("product-" + id).remove();
+    }
+
+    function calculate() {
+      let rate = parseFloat(document.getElementById("rate").value);
+      let outputText = "🧾 Order information\n\n";
+      let grandTotal = 0;
+      let hasProduct = false;
+
+      if (isNaN(rate)) {
+        document.getElementById("output").innerText = "⚠️ Please enter a valid exchange rate.";
+        document.getElementById("copyBtn").style.display = "none";
+        return;
+      }
+
+      const taxRate = 0.03;
+      const weightRate = 120; // per 100g
+
+      for (let i = 1; i <= productCount; i++) {
+        let name = document.getElementById("name-" + i)?.value || "(No Name)";
+        let priceGBP = parseFloat(document.getElementById("price-" + i)?.value);
+        let weight = parseFloat(document.getElementById("weight-" + i)?.value);
+
+        if (isNaN(priceGBP) || isNaN(weight)) continue;
+
+        hasProduct = true;
+
+        let basePrice = priceGBP * rate;
+        let tax = basePrice * taxRate;
+        let weightCharge = (weight / 100) * weightRate;
+        let total = basePrice + tax + weightCharge;
+        grandTotal += total;
+
+        outputText += 
+`🔗 Product name: ${name}
+Price (£): ~£${priceGBP.toFixed(2)}
+
+⸻
+
+💷 Price Calculation (1 £ = ${rate.toFixed(2)} ৳):
+• Base Price: £${priceGBP.toFixed(2)} × ${rate.toFixed(2)} = ${basePrice.toFixed(2)} ৳
+• Tax (3%): ${basePrice.toFixed(2)} × 0.03 = ${tax.toFixed(2)} ৳
+• Weight Charge (~${weight.toFixed(2)} g ⇒ 120 ৳ per 100 g):
+(${weight.toFixed(2)} g / 100 g) × 120 ৳ ≈ ${weightCharge.toFixed(2)} ৳
+
+⸻
+
+➡ Total Payable: ${total.toFixed(2)} ৳ only
+
+⸻\n\n`;
+      }
+
+      if (!hasProduct) {
+        document.getElementById("output").innerText = "⚠️ Please enter at least one valid product.";
+        document.getElementById("copyBtn").style.display = "none";
+        return;
+      }
+
+      outputText += `GRAND Total : ${grandTotal.toFixed(2)} ৳\n+ Delivery charge (will be added, vary on place and weight)\n\n`;
+      
+      outputText += `💳 Payment Terms:
+• Advance Payment: 25% – 100% (based on product/price)
+• bKash (01703012612): +15 ৳ per 1,000 ৳
+• Nagad (01813339977): +10 ৳ per 1,000 ৳
+
+⸻
+
+🚚 Delivery Time: 3–4 weeks
+📦 100% Genuine | Secure Payment | Trusted Service ✅`;
+
+      document.getElementById("output").innerText = outputText.trim();
+      document.getElementById("copyBtn").style.display = "inline-block";
+    }
+
+    // ✅ Works on both desktop + mobile
+    function copyText() {
+      let text = document.getElementById("output").innerText;
+      if (!text) {
+        alert("⚠️ Nothing to copy!");
+        return;
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("✅ Text copied to clipboard!");
+        }).catch(err => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      let textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed"; 
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      try {
+        document.execCommand("copy");
+        alert("✅ Text copied to clipboard!");
+      } catch (err) {
+        alert("❌ Copy failed. Please copy manually.");
+      }
+
+      document.body.removeChild(textarea);
+    }
+  </script>
+</body>
+</html>
